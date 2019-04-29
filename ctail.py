@@ -116,10 +116,6 @@ def format_eventlog(log):
                   r"\1" + Colors['endc'] + "]", desc)
     desc = re.sub("\(([^)]*)\)", "(" + Colors['purple'] +
                   r"\1" + Colors['endc'] + ")" , desc)
-    desc = re.sub(":([^,]*)", ":" + Colors['value'] +
-                  r"\1" + Colors['endc'], desc)
-    desc = re.sub("=([^,]*)", "=" + Colors['value'] +
-                  r"\1" + Colors['endc'], desc)
     return '%s %s %s %s' % (datetime, event, level, desc), False
 
 def colorize_ok(str):
@@ -140,21 +136,13 @@ def format_cilog(log):
     else:
         level = Colors['level'] + level + Colors['endc']
     section = re.sub("\[([^]]*)\]", "[" + Colors['keyword'] +
-                     r"\1" + Colors['section'] + "]", section)
+                     r"\1" + Colors['endc'] + "]", section)
     section = Colors['section'] + section + Colors['endc']
     code = Colors['code'] + code + Colors['endc']
     description = re.sub("\[([^]]*)\]", "[" + Colors['keyword'] +
-                         r"\1" + Colors['description'] + "]", description)
+                         r"\1" + Colors['endc'] + Colors['description'] + "]", description)
     description = re.sub("\(([^)]*)\)", "(" + Colors['purple'] +
-                         r"\1" + Colors['description'] + ")", description)
-    description = re.sub("([\w]*):", Colors['variable'] +
-                         r"\1" + Colors['description'] + ":", description)
-    description = re.sub(":([^,]*)", ":" + Colors['value'] +
-                         r"\1" + Colors['description'], description)
-    description = re.sub("([\w]*)=", Colors['variable'] +
-                         r"\1" + Colors['description'] + "=", description)
-    description = re.sub("=([^,]*)", "=" + Colors['value'] +
-                         r"\1" + Colors['description'], description)
+                         r"\1" + Colors['endc'] + Colors['description'] + ")", description)
     description = Colors['description'] + description + Colors['endc']
     return ','.join([name, id, date, time, level, section, code, description]), False
 
