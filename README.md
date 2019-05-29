@@ -8,6 +8,7 @@
 
 - cilog 포멧에 대한 하이라이트
 - eventlog 포멧에 대한 하이라이트
+- ncsa combined log 포멧에 대한 하이라이트
 - 괄호 내 단어들에 대한 하이라이트
 - stdin pipe 지원
 - 지정한 파일만 tail하는 옵션 추가
@@ -44,6 +45,7 @@ $ cat EventLog.log | ctail
 
 - cilog 포멧에 대한 하이라이트
 - eventlog 포멧에 대한 하이라이트
+- ncsa combined log 포멧에 대한 하이라이트
 - 괄호 내 단어들에 대한 하이라이트
 - logdatetime 필터링
 - stdin pipe 지원
