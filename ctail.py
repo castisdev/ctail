@@ -116,6 +116,10 @@ def format_eventlog(log):
                   r"\1" + Colors['endc'] + "]", desc)
     desc = re.sub("\(([^)]*)\)", "(" + Colors['value'] +
                   r"\1" + Colors['endc'] + ")" , desc)
+    if _skip_date and _skip_time:
+        datetime = ""
+    if _skip_level:
+        level = ""
     return '%s %s %s %s' % (datetime, event, level, desc), False
 
 def colorize_ok(str):
@@ -128,13 +132,23 @@ def format_cilog(log):
     except Exception as e:
         return log, True
     name = Colors['name'] + name + Colors['endc']
+    if _skip_name :
+        name = ""
     id = Colors['id'] + id + Colors['endc']
+    if _skip_id :
+        id = ""
     date = Colors['date'] + date + Colors['endc']
+    if _skip_date :
+        date = ""
     time = Colors['time'] + time + Colors['endc']
-    if level in ['Error', 'Fail', 'Warning']:
+    if _skip_time :
+        time = ""
+    if level in ['Error', 'Fail', 'Warning', 'Exception']:
         level = Colors['error'] + level + Colors['endc']
     else:
         level = Colors['level'] + level + Colors['endc']
+    if _skip_level :
+        level = ""
     section = re.sub("\[([^]]*)\]", "[" + Colors['keyword'] +
                      r"\1" + Colors['endc'] + "]", section)
     section = Colors['section'] + section + Colors['endc']
@@ -156,6 +170,8 @@ def format_ncsacombinedlog(log):
     request = method + " " + uri + " " + version
     request = Colors['green'] + request + Colors['endc']
     statuscode = Colors['blue'] + statuscode + Colors['endc']
+    if _skip_date and _skip_time:
+        datetimetz = ""
     return '%s %s %s %s %s %s %s %s' % (host, id, username, datetimetz, request, statuscode, bytes, combined), False
 
 def format_ncsalog(log):
@@ -168,6 +184,8 @@ def format_ncsalog(log):
     request = method + " " + uri + " " + version
     request = Colors['green'] + request + Colors['endc']
     statuscode = Colors['blue'] + statuscode + Colors['endc']
+    if _skip_date and _skip_time:
+        datetimetz = ""
     return '%s %s %s %s %s %s %s' % (host, id, username, datetimetz, request, statuscode, bytes), False
 
 def print_format_log(log):
@@ -209,7 +227,7 @@ def open_head(filename, offset):
     global _last_target_filename
     try:
         f = open(filename)
-        if _verbose and _last_target_filename != filename: 
+        if _verbose and _last_target_filename != filename:
             print colorize_ok('>>> Open :%s' % filename),
             print ", offset:" , offset
         f.seek(offset, 0)
@@ -229,13 +247,13 @@ def open_tail(filename):
         f = open(filename)
         size = os.path.getsize(filename)
 
-        if _verbose and _last_target_filename != filename: 
+        if _verbose and _last_target_filename != filename:
             print colorize_ok('>>> Open :%s' % filename),
             print colorize_ok(', size :%s' % size)
 
-        if size >= 2048: 
+        if size >= 2048:
             f.seek(-2048, 2)
-            line = f.readline()                         
+            line = f.readline()
     except Exception as e:
         if _verbose:
             print colorize_ok('>>> Error :%s' % filename),
@@ -247,7 +265,7 @@ def open_tail(filename):
 
 def get_tail_filename(filename, follow_file):
     if follow_file:
-        if not exist_file(filename): 
+        if not exist_file(filename):
             if _verbose: print colorize_ok('>>> Not found :%s' % filename)
             return None, False
         tail_file = filename
@@ -262,7 +280,7 @@ def get_tail_filename(filename, follow_file):
             if _verbose:
                 print colorize_ok('>>> Error :%s' % path),
                 print e
-            return None, False   
+            return None, False
     return tail_file, True
 
 def keep_tail(f):
@@ -273,7 +291,7 @@ def keep_tail(f):
             if _verbose: print colorize_ok('>>> Error :' % e)
             f.close()
             return 0, True
-        if line: 
+        if line:
             print_format_log(line)
             sys.stdout.softspace=0
         else: break
@@ -296,7 +314,7 @@ def get_offset(filename):
 def reopen_tail(filename, follow_file, target_filename, target_file_offset):
     re_target_filename, exist = get_tail_filename(filename, follow_file)
     if not exist: return None, None, None, True
-    
+
     if target_filename == re_target_filename:
         try:
             new_target_filename_offset = os.path.getsize(target_filename)
@@ -342,18 +360,19 @@ def tail(filename, follow_file):
 
         f, target, offset, error = reopen_tail(filename, follow_file, target, offset)
         if error : return
-               
+
         time.sleep(0.01)
 
 def sig_handler(signal, frame):
-    if _verbose: 
+    if _verbose:
         offset, exist = get_offset(_last_target_filename)
         print colorize_ok("\n>>> Open files :%s" % _fileoffset_repository),
-        print colorize_ok("\n>>> Last Open :%s" % _last_target_filename), 
+        print colorize_ok("\n>>> Last Open :%s" % _last_target_filename),
         print colorize_ok(", offset :%s" % offset)
     sys.exit(0)
 
 def usage():
+    print os.path.basename(sys.argv[0]) + ' ' + _version
     print 'Usage: %s [option] FILE' % os.path.basename(sys.argv[0])
     print ' or :  %s [option] DIRECTORY' % os.path.basename(sys.argv[0])
     print ''
@@ -364,11 +383,19 @@ def usage():
     print '-f             follow FILE, not to tail the newest file in the directory of FILE'
     print '-r, --retry    keep trying to open a file if it is inaccessible. sleep for 1.0 sec between retry iterations'
     print '-v, --verbose  print messages verbosely'
+    print '-N             not to print name field of cilog'
+    print '-I             not to print id field of cilog'
+    print '-D             not to print id field of cilog'
+    print '-T             not to print id field of cilog'
+    print '-L             not to print id field of cilog'
 
 def print_version():
-    print '0.1.3'
+    print _version
 
 def main():
+    global _version
+    _version = "0.1.4"
+
     signal.signal(signal.SIGINT, sig_handler)
     if len(sys.argv) == 1 and not sys.stdin.isatty():
         cat()
@@ -391,8 +418,23 @@ def main():
     follow_file = False
     retry = False
 
+    global _skip_name
+    _skip_name = False
+
+    global _skip_id
+    _skip_id = False
+
+    global _skip_date
+    _skip_date = False
+
+    global _skip_time
+    _skip_time = False
+
+    global _skip_level
+    _skip_level = False
+
     try:
-        options, args = getopt.getopt(sys.argv[1:], "vfhr", ["help", "retry", "version", "verbose"])
+        options, args = getopt.getopt(sys.argv[1:], "vfhrNIDTL", ["help", "retry", "version", "verbose"])
     except getopt.GetoptError as err:
         print str(err)
         print ""
@@ -412,6 +454,16 @@ def main():
         if op == "-h" or op == "--help":
             usage()
             sys.exit(1)
+        if op == "-N":
+            _skip_name = True
+        if op == "-I":
+            _skip_id = True
+        if op == "-D":
+            _skip_date = True
+        if op == "-T":
+            _skip_time = True
+        if op == "-L":
+            _skip_level = True
 
     if len(args) > 0:
         filename = args[0]
@@ -420,7 +472,7 @@ def main():
         tail(filename, follow_file)
         if retry:
             time.sleep(1)
-        else: 
+        else:
             break
 
 if __name__ == '__main__':

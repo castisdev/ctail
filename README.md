@@ -13,6 +13,7 @@
 - stdin pipe 지원
 - 지정한 파일만 tail하는 옵션 추가
 - tail 하고 있던 파일에 대한 retry 기능
+- cilog 포맷의 name, id, date, time 필드 표시하지않는 옵션 추가
 
 ## 설치
 
@@ -35,7 +36,7 @@ $ cat EventLog.log | ctail
 ...
 ```
 
-## 데모 
+## 데모
 
 ![](https://github.com/castisdev/ctail/blob/master/sample.png)
 
@@ -49,13 +50,14 @@ $ cat EventLog.log | ctail
 - 괄호 내 단어들에 대한 하이라이트
 - logdatetime 필터링
 - stdin pipe 지원
+- cilog 포맷의 name, id, date, time 필드 표시하지않는 옵션 추가
 
 ## 사용 예
 ```bash
 
-# ccat 
+# ccat
 
-$ ccat -v test/test* 
+$ ccat -v test/test*
 >>> Open files :['test/test1.log', 'test/test2.log', 'test/test3.log', 'test/test4.log', 'test/test5.log', 'test/test6.log']
 >>> Open :test/test1.log , size :120
 2018-10-26 16:37:42 Global none LoadBalancer2 STARTED!
@@ -72,7 +74,7 @@ $ ccat -v test/test*
 2018-10-26 16:38:03 Global debug Ping-Client : IsServerAlive ERROR!! -> -1, 127.0.0.1
 >>> Open :test/test6.log , size :91
 2018-10-26 16:38:07 Global none SCP-Client : IsServerAlive RECOVERY (OnObjectServerResponse)!! -> -1
->>> Open files :{'test/test5.log': 225, 'test/test1.log': 120, 'test/test6.log': 91, 'test/test2.log': 75, 'test/test4.log': 75, 'test/test3.log': 75} 
+>>> Open files :{'test/test5.log': 225, 'test/test1.log': 120, 'test/test6.log': 91, 'test/test2.log': 75, 'test/test4.log': 75, 'test/test3.log': 75}
 >>> Last Open :test/test6.log , offset :91
 
 # ccat -b, -e option
@@ -82,12 +84,12 @@ $ ccat -V -b 2018-10-26T16:37:45 -e 2018-10-26T16:38 test/test1.log test/t1.log 
 2018-10-26 16:37:45 Global debug Ping-Client : IsServerAlive ERROR!! -> -1, 127.0.0.1
 2018-10-26 16:37:48 Global debug Ping-Client : IsServerAlive ERROR!! -> -1, 127.0.0.1
 >>> Open files :['test/test1.log', 'test/t1.log', 'test/test2.log']
->>> Actural Open files :{ 'test/test1.log': 120, 'test/test2.log': 75 } 
+>>> Actural Open files :{ 'test/test1.log': 120, 'test/test2.log': 75 }
 >>> Last Open :test/test2.log , offset :75
 >>> begin time :2018-10-26 16:37:45 , end time :2018-10-26 16:38:00
 
 # pipe
-$ cat test/test* | ccat          
+$ cat test/test* | ccat
 2018-10-26 16:37:42 Global none LoadBalancer2 STARTED!
 2018-10-26 16:37:45 Global debug Ping-Client : IsServerAlive ERROR!! -> -1, 127.0.0.1
 2018-10-26 16:37:48 Global debug Ping-Client : IsServerAlive ERROR!! -> -1, 127.0.0.1
@@ -98,4 +100,3 @@ $ cat test/test* | ccat
 2018-10-26 16:38:03 Global debug Ping-Client : IsServerAlive ERROR!! -> -1, 127.0.0.1
 2018-10-26 16:38:07 Global none SCP-Client : IsServerAlive RECOVERY (OnObjectServerResponse)!! -> -1
 ```
-
