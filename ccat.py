@@ -575,7 +575,22 @@ def convert_datetime(dt, fuzzy, print_error):
 
 def main():
     global _version
-    _version = "0.1.3"
+    _version = "0.1.4"
+
+    global _skip_name
+    _skip_name = False
+
+    global _skip_id
+    _skip_id = False
+
+    global _skip_date
+    _skip_date = False
+
+    global _skip_time
+    _skip_time = False
+
+    global _skip_level
+    _skip_level = False
 
     global _begin_time, _end_time
     _begin_time = ''
@@ -612,21 +627,6 @@ def main():
 
     global _filenmae_searcing_fileoffset_repository
     _filenmae_searcing_fileoffset_repository = {}
-
-    global _skip_name
-    _skip_name = False
-
-    global _skip_id
-    _skip_id = False
-
-    global _skip_date
-    _skip_date = False
-
-    global _skip_time
-    _skip_time = False
-
-    global _skip_level
-    _skip_level = False
 
     try:
         options, args = getopt.getopt(sys.argv[1:], "NIDTLtCVvhb:e:", [

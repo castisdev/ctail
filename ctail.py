@@ -394,7 +394,22 @@ def print_version():
 
 def main():
     global _version
-    _version = "0.1.4"
+    _version = "0.1.5"
+
+    global _skip_name
+    _skip_name = False
+
+    global _skip_id
+    _skip_id = False
+
+    global _skip_date
+    _skip_date = False
+
+    global _skip_time
+    _skip_time = False
+
+    global _skip_level
+    _skip_level = False
 
     signal.signal(signal.SIGINT, sig_handler)
     if len(sys.argv) == 1 and not sys.stdin.isatty():
@@ -417,21 +432,6 @@ def main():
     filename = '.'
     follow_file = False
     retry = False
-
-    global _skip_name
-    _skip_name = False
-
-    global _skip_id
-    _skip_id = False
-
-    global _skip_date
-    _skip_date = False
-
-    global _skip_time
-    _skip_time = False
-
-    global _skip_level
-    _skip_level = False
 
     try:
         options, args = getopt.getopt(sys.argv[1:], "vfhrNIDTL", ["help", "retry", "version", "verbose"])
