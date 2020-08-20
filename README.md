@@ -4,8 +4,7 @@
 
 ## 기능
 
-- 폴더 내 최신 파일을 자동으로 열어줌
-
+- 폴더 내 최신 텍스트 파일을 자동으로 열어줌
 - cilog 포멧에 대한 하이라이트
 - eventlog 포멧에 대한 하이라이트
 - ncsa combined log 포멧에 대한 하이라이트
@@ -16,6 +15,7 @@
 - cilog 포맷의 name, id, date, time 필드 표시하지않는 옵션 추가
 - cilog 를 simple 하게 볼 수 있는 옵션 추가
 - pipe 사용 시에 옵션을 사용할 수 있게 수정
+- 바이너리 파일 지원하지 않음
 
 ## 설치
 
@@ -25,11 +25,11 @@ $ wget -O - https://raw.githubusercontent.com/castisdev/ctail/master/install.sh 
 
 ## 사용 예
 ```
-# 폴더의 최신 파일을 tail
+# 폴더의 최신 텍스트 파일을 tail
 $ ctail /var/log/castis/vod/2015-03/2015-
 ...
 
-# 지정한 파일을 tail
+# 지정한 텍스트 파일을 tail
 $ ctail -f /var/log/castis/vod/event.log
 ...
 
