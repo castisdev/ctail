@@ -214,6 +214,7 @@ def format_ncsalog(log):
         datetimetz = ""
     return '%s %s %s %s %s %s %s' % (host, id, username, datetimetz, request, statuscode, bytes), False
 
+
 def format_simplelog(log):
     try:
         level, date, time, section, description = log.split(' ', 4)
@@ -248,18 +249,20 @@ def format_simplelog(log):
 
     return ' '.join([level, date, time, section, description]), False
 
+
 def print_format_log(log):
     if log.startswith('0x'):
         log, error = format_eventlog(translate(log))
     else:
         log, error = format_cilog(log)
         if error:
-          log, error = format_simplelog(log)
-          if error:
-            log, error = format_ncsacombinedlog(log)
+            log, error = format_simplelog(log)
             if error:
-              log, error = format_ncsalog(log)
+                log, error = format_ncsacombinedlog(log)
+                if error:
+                    log, error = format_ncsalog(log)
     print log,
+
 
 def is_binary(filename):
     """Return true if the given filename is binary.
@@ -268,22 +271,31 @@ def is_binary(filename):
     @author: Trent Mick <TrentM@ActiveState.com>
     @author: Jorge Orpinel <jorge@orpinel.com>"""
     with open(filename, 'rb') as f:
-      CHUNKSIZE = 1024
-      while 1:
-          chunk = f.read(CHUNKSIZE)
-          if b'\0' in chunk:  # found null byte
-              return True
-          if len(chunk) < CHUNKSIZE:
-              break  # done
+        CHUNKSIZE = 1024
+        while 1:
+            chunk = f.read(CHUNKSIZE)
+            if b'\0' in chunk:  # found null byte
+                return True
+            if len(chunk) < CHUNKSIZE:
+                break  # done
     return False
+
 
 def newest_file_in(path):
     def mtime(f): return os.stat(os.path.join(path, f)).st_mtime
-    ls = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))
-                                         and is_binary(os.path.join(path,f))==False]
+    ls = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
     if len(ls) == 0:
         return ""
-    newest_file_name = list(sorted(ls, key=mtime))[-1]
+
+    newest_file_name = ""
+    soreted_ls = list(sorted(ls, key=mtime))
+    while (len(soreted_ls) > 0):
+        f = soreted_ls.pop()
+        if is_binary(os.path.join(path, f)) == False:
+            newest_file_name = f
+            break
+    if newest_file_name == "":
+        return ""
     return os.path.join(path, newest_file_name)
 
 
@@ -313,13 +325,13 @@ def open_head(filename, offset):
     try:
         f = open(filename)
         if _verbose and _last_target_filename != filename:
-          if _follow_file:
-            print colorize_ok('>>> Open :%s' % filename),
-            print ", offset:", offset
-          else:
-            path = get_path_of(filename)
-            print colorize_ok(">>> Open :{} in {}".format(filename,path)),
-            print colorize_ok(", offset :{:,}".format(offset))
+            if _follow_file:
+                print colorize_ok('>>> Open :%s' % filename),
+                print ", offset:", offset
+            else:
+                path = get_path_of(filename)
+                print colorize_ok(">>> Open :{} in {}".format(filename, path)),
+                print colorize_ok(", offset :{:,}".format(offset))
         f.seek(offset, 0)
     except Exception as e:
         if _verbose:
@@ -339,16 +351,17 @@ def open_tail(filename):
         size = os.path.getsize(filename)
 
         if _verbose and _last_target_filename != filename:
-          if _follow_file:
-            print colorize_ok('>>> Open :%s' % filename),
-            print colorize_ok(", size :{:,}".format(size))
-          else:
-            path = get_path_of(filename)
-            print colorize_ok("\n>>> Open :{} in {}".format(filename,path)),
-            print colorize_ok(", size :{:,}".format(size))
+            if _follow_file:
+                print colorize_ok('>>> Open :%s' % filename),
+                print colorize_ok(", size :{:,}".format(size))
+            else:
+                path = get_path_of(filename)
+                print colorize_ok(
+                    "\n>>> Open :{} in {}".format(filename, path)),
+                print colorize_ok(", size :{:,}".format(size))
 
         if size >= 2048:
-          f.seek(size - 2048, 0)
+            f.seek(size - 2048, 0)
 
         line = f.readline()
     except Exception as e:
@@ -368,9 +381,9 @@ def get_tail_filename(filename, follow_file):
                 print colorize_ok('>>> Not found :%s' % filename)
             return None, False
         if is_binary(filename):
-          if _verbose:
-            print colorize_ok('>>> Not a text file :%s' % filename)
-          return None, False
+            if _verbose:
+                print colorize_ok('>>> Not a text file :%s' % filename)
+            return None, False
         tail_file = filename
     else:
         try:
@@ -494,12 +507,13 @@ def sig_handler(signal, frame):
         offset, exist = get_offset(_last_target_filename)
         print colorize_ok("\n>>> Open files :%s" % _fileoffset_repository),
         if _follow_file:
-          print colorize_ok("\n>>> Last Open :%s" % _last_target_filename),
-          print colorize_ok(", offset :{:,}".format(offset))
+            print colorize_ok("\n>>> Last Open :%s" % _last_target_filename),
+            print colorize_ok(", offset :{:,}".format(offset))
         else:
-          path = get_path_of(_last_target_filename)
-          print colorize_ok("\n>>> Last Open :{} in {}".format(_last_target_filename,path)),
-          print colorize_ok(", offset :{:,}".format(offset))
+            path = get_path_of(_last_target_filename)
+            print colorize_ok("\n>>> Last Open :{} in {}".format(
+                _last_target_filename, path)),
+            print colorize_ok(", offset :{:,}".format(offset))
 
     sys.exit(0)
 
@@ -532,7 +546,7 @@ def print_version():
 
 def main():
     global _version
-    _version = "0.1.7"
+    _version = "0.1.8"
 
     global _skip_name
     _skip_name = False
@@ -581,7 +595,7 @@ def main():
 
     try:
         options, args = getopt.getopt(sys.argv[1:], "vfhrNIDTLSC", [
-                                  "simple", "help", "retry", "version", "verbose"])
+            "simple", "help", "retry", "version", "verbose"])
     except getopt.GetoptError as err:
         print str(err)
         print ""

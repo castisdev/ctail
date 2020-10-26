@@ -279,11 +279,19 @@ def is_binary(filename):
 
 def newest_file_in(path):
     def mtime(f): return os.stat(os.path.join(path, f)).st_mtime
-    ls = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))
-                                         and is_binary(os.path.join(path,f))==False]
+    ls = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
     if len(ls) == 0:
         return ""
-    newest_file_name = list(sorted(ls, key=mtime))[-1]
+
+    newest_file_name = ""
+    soreted_ls = list(sorted(ls, key=mtime))
+    while (len(soreted_ls) > 0):
+        f = soreted_ls.pop()
+        if is_binary(os.path.join(path, f)) == False:
+            newest_file_name = f
+            break
+    if newest_file_name == "":
+        return ""
     return os.path.join(path, newest_file_name)
 
 
@@ -534,7 +542,7 @@ def print_version():
 
 def main():
     global _version
-    _version = "0.1.7"
+    _version = "0.1.8"
 
     global _skip_name
     _skip_name = False

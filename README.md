@@ -42,3 +42,10 @@ $ cat cilog.log | ctail --simple
 ## 데모
 
 ![](https://github.com/castisdev/ctail/blob/master/sample.png)
+
+
+## Release Notes
+
+### 0.1.8
+
+* 폴더 내 파일이 많은 경우 최신 파일 찾는 데 오래걸리는 현상 수정
