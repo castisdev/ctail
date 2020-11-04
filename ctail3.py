@@ -214,6 +214,7 @@ def format_ncsalog(log):
         datetimetz = ""
     return '%s %s %s %s %s %s %s' % (host, id, username, datetimetz, request, statuscode, bytes), False
 
+
 def format_simplelog(log):
     try:
         level, date, time, section, description = log.split(' ', 4)
@@ -248,18 +249,20 @@ def format_simplelog(log):
 
     return ' '.join([level, date, time, section, description]), False
 
+
 def print_format_log(log):
     if log.startswith('0x'):
         log, error = format_eventlog(translate(log))
     else:
         log, error = format_cilog(log)
         if error:
-          log, error = format_simplelog(log)
-          if error:
-            log, error = format_ncsacombinedlog(log)
+            log, error = format_simplelog(log)
             if error:
-              log, error = format_ncsalog(log)
+                log, error = format_ncsacombinedlog(log)
+                if error:
+                    log, error = format_ncsalog(log)
     print(log, end=' ')
+
 
 def is_binary(filename):
     """Return true if the given filename is binary.
@@ -268,14 +271,15 @@ def is_binary(filename):
     @author: Trent Mick <TrentM@ActiveState.com>
     @author: Jorge Orpinel <jorge@orpinel.com>"""
     with open(filename, 'rb') as f:
-      CHUNKSIZE = 1024
-      while 1:
-          chunk = f.read(CHUNKSIZE)
-          if b'\0' in chunk:  # found null byte
-              return True
-          if len(chunk) < CHUNKSIZE:
-              break  # done
+        CHUNKSIZE = 1024
+        while 1:
+            chunk = f.read(CHUNKSIZE)
+            if b'\0' in chunk:  # found null byte
+                return True
+            if len(chunk) < CHUNKSIZE:
+                break  # done
     return False
+
 
 def newest_file_in(path):
     def mtime(f): return os.stat(os.path.join(path, f)).st_mtime
@@ -290,6 +294,7 @@ def newest_file_in(path):
         if is_binary(os.path.join(path, f)) == False:
             newest_file_name = f
             break
+
     if newest_file_name == "":
         return ""
     return os.path.join(path, newest_file_name)
@@ -316,98 +321,43 @@ def cat():
         sys.stdout.softspace = 0
 
 
-def open_head(filename, offset):
-    global _last_target_filename
-    try:
-        f = open(filename)
-        if _verbose and _last_target_filename != filename:
-          if _follow_file:
-            print(colorize_ok('>>> Open :%s' % filename), end=' ')
-            print(colorize_ok(", offset :{:,}".format(offset)))
-          else:
-            path = get_path_of(filename)
-            print(colorize_ok(">>> Open :{} in {}".format(filename,path)), end=' ')
-            print(colorize_ok(", offset :{:,}".format(offset)))
-
-        f.seek(offset, 0)
-    except Exception as e:
-        if _verbose:
-            print(colorize_ok('>>> Error :%s' % filename), end=' ')
-            print(e)
-        return None, True
-
-    _last_target_filename = filename
-    return f, False
-
-
-def open_tail(filename):
-    global _last_target_filename
-
-    try:
-        f = open(filename)
-        size = os.path.getsize(filename)
-
-        if _verbose and _last_target_filename != filename:
-          if _follow_file:
-            print(colorize_ok('>>> Open :%s' % filename), end=' ')
-            print(colorize_ok(", size :{:,}".format(size)))
-          else:
-            path = get_path_of(filename)
-            print(colorize_ok("\n>>> Open :{} in {}".format(filename,path)), end=' ')
-            print(colorize_ok(", size :{:,}".format(size)))
-
-        if size >= 2048:
-          f.seek(size - 2048, 0)
-
-        line = f.readline()
-    except Exception as e:
-        if _verbose:
-            print(colorize_ok('>>> Error :%s' % filename), end=' ')
-            print(e)
-        return None, True
-
-    _last_target_filename = filename
-    return f, False
-
-
 def get_tail_filename(filename, follow_file):
     if follow_file:
         if not exist_file(filename):
             if _verbose:
-                print(colorize_ok('>>> Not found :%s' % filename))
+                print (colorize_ok('>>> Not found :{}'.format(filename)))
             return None, False
         if is_binary(filename):
             if _verbose:
-                print(colorize_ok('>>> Not a text file :%s' % filename))
+                print (colorize_ok('>>> Not a text file :{}'.format(filename)))
             return None, False
-
         tail_file = filename
     else:
         try:
             path = get_path_of(filename)
             if not exist_directory(path):
                 if _verbose:
-                    print(colorize_ok('>>> Not found path :%s' % path))
+                    print (colorize_ok('>>> Not found path :{}'.format(path)))
                 return None, False
             tail_file = newest_file_in(path)
             if tail_file == "":
-                print(colorize_ok('>>> Error : No text files in %s' % path))
+                if _verbose:
+                  print (colorize_ok('>>> Error : No text files in {}'.format(path)))
                 return None, False
         except Exception as e:
             if _verbose:
-                print(colorize_ok('>>> Error :%s' % path), end=' ')
-                print(e)
+                print (colorize_ok('>>> Error :{}, {}'.foramt(filename, e)))
             return None, False
     return tail_file, True
 
 
-def keep_tail(f):
+def keep_tail(f):  # -> (offset, error)
     while True:
         try:
             line = f.readline()
         except Exception as e:
             if _verbose:
-                print(colorize_ok('>>> Error :' % e))
+                print (colorize_ok('>>> Error :{}'.format(e)))
             f.close()
             return 0, True
         if line:
@@ -416,7 +366,6 @@ def keep_tail(f):
         else:
             break
     offset = f.tell()
-    f.close()
     return offset, False
 
 
@@ -434,115 +383,120 @@ def get_offset(filename):
         return 0, False
 
 
-def reopen_tail(filename, follow_file, target_filename, target_file_offset):
-    re_target_filename, exist = get_tail_filename(filename, follow_file)
-    if not exist:
-        return None, None, None, True
-
-    if target_filename == re_target_filename:
-        try:
-            new_target_filename_offset = os.path.getsize(target_filename)
-        except Exception as e:
-            if _verbose:
-                print(colorize_ok('>>> Error :%s' % target_filename), end=' ')
-                print(e)
-            return None, None, None, True
-
-        if target_file_offset <= new_target_filename_offset:
-            f, error = open_head(target_filename, target_file_offset)
-            if error:
-                return None, None, None, True
+def open_tail(filename, offset=0):  # -> (fd, error)
+    try:
+        f = open(filename)
+    except Exception as e:
+        if _verbose:
+            print (colorize_ok('>>> Open Error :{}, {}'.format(filename, e)))
+        return None, True
+    try:
+        size = os.path.getsize(filename)
+        if _verbose:
+            if _follow_file:
+                print (colorize_ok(">>> Open :{}, size :{:,}".format(filename, size)))
+            else:
+                path = get_path_of(filename)
+                print (colorize_ok(
+                    ">>> Open :{} in {}, size :{:,}".format(filename, path, size)))
+        if offset > 0:
+            f.seek(offset, 0)
         else:
-            f, error = open_head(target_filename, 0)
-            if error:
-                return None, None, None, True
-
-    else:
-        target_filename = re_target_filename
-        target_file_offset, exist = get_offset(target_filename)
-        f, error = open_head(target_filename, target_file_offset)
-        if error:
-            return None, None, None, True
-
-    return f, target_filename, target_file_offset, False
+            if size > 2048:
+                f.seek(size - 2048 - 1, 0)
+                f.readline()
+    except Exception as e:
+        f.close()
+        if _verbose:
+            print (colorize_ok('>>> Error :{}, {}'.format(filename, e)))
+        return None, True
+    return f, False
 
 
 def tail(filename, follow_file):
+    global _last_target_filename
     target, exist = get_tail_filename(filename, follow_file)
     if not exist:
         return
 
-    if _last_target_filename == '':
-        f, error = open_tail(target)
-        if error:
-            return
-    else:
-        target = _last_target_filename
-        offset, exist = get_offset(target)
-        f, target, offset, error = reopen_tail(
-            filename, follow_file, target, offset)
-        if error:
-            return
+    f, error = open_tail(target)
+    if error:
+        return
+    _last_target_filename = target
 
     while True:
         offset, error = keep_tail(f)
         if error:
+            put_offset(target, 0)
             return
 
-        put_offset(target, offset)
+        if follow_file:
+            time.sleep(0.1)
+            continue
+        else:
+            new_target, exist = get_tail_filename(filename, False)
+            if not exist:
+                return
 
-        f, target, offset, error = reopen_tail(
-            filename, follow_file, target, offset)
-        if error:
-            return
+            if target == new_target:
+                time.sleep(0.1)
+                continue
+            else:
+                put_offset(target, offset)
+                f.close()
 
-        time.sleep(0.01)
+                target = new_target
+                offset, exist = get_offset(target)
+                f, error = open_tail(target, offset)
+                if error:
+                    return
+                _last_target_filename = target
+
+        time.sleep(0.1)
 
 
 def sig_handler(signal, frame):
     if _verbose:
         offset, exist = get_offset(_last_target_filename)
-        print(colorize_ok("\n>>> Open files :%s" % _fileoffset_repository), end=' ')
         if _follow_file:
-          print(colorize_ok("\n>>> Last Open :%s" % _last_target_filename), end=' ')
-          print(colorize_ok(", offset :{:,}".format(offset)))
+            print (colorize_ok("\n>>> Last Open :{}".format(_last_target_filename)))
         else:
-          path = get_path_of(_last_target_filename)
-          print(colorize_ok("\n>>> Last Open :{} in {}".format(_last_target_filename,path)), end=' ')
-          print(colorize_ok(", offset :{:,}".format(offset)))
-
+            path = get_path_of(_last_target_filename)
+            print (colorize_ok("\n>>> Last Open :{} in {}".format(
+                _last_target_filename, path)))
     sys.exit(0)
 
 
 def usage():
-    print(os.path.basename(sys.argv[0]) + ' ' + _version)
-    print('Usage: %s [option] FILE' % os.path.basename(sys.argv[0]))
-    print(' or :  %s [option] DIRECTORY' % os.path.basename(sys.argv[0]))
-    print('')
-    print('Continuosly tail the newest text file in DIRECTORY(or in the directory of FILE)')
-    print('or tail the specific FILE with -f option')
-    print('Options:')
-    print('--version      print version')
-    print('-f             follow FILE, not to tail the newest file in the directory of FILE')
-    print('-r, --retry    keep trying to open a file if it is inaccessible. sleep for 1.0 sec between retry iterations')
-    print('-v, --verbose  print messages verbosely')
-    print('--simple       to print simple format')
-    print('-N             not to print name field of cilog')
-    print('-I             not to print id field of cilog')
-    print('-D             not to print date field of cilog')
-    print('-T             not to print time field of cilog')
-    print('-L             not to print level field of cilog')
-    print('-S             not to print section field of cilog')
-    print('-C             not to print code field of cilog')
+    print (os.path.basename(sys.argv[0]) + ' ' + _version)
+    print ('Usage: {} [option] FILE'.format(os.path.basename(sys.argv[0])))
+    print (' or :  {} [option] DIRECTORY'.format(
+        os.path.basename(sys.argv[0])))
+    print ('')
+    print ('Continuosly tail the newest text file in DIRECTORY(or in the directory of FILE)')
+    print ('or tail the specific FILE with -f option')
+    print ('Options:')
+    print ('--version      print version')
+    print ('-f             follow FILE, not to tail the newest file in the directory of FILE')
+    print ('-r, --retry    keep trying to open a file if it is inaccessible. sleep for 1.0 sec between retry iterations')
+    print ('-v, --verbose  print messages verbosely')
+    print ('--simple       to print simple format')
+    print ('-N             not to print name field of cilog')
+    print ('-I             not to print id field of cilog')
+    print ('-D             not to print date field of cilog')
+    print ('-T             not to print time field of cilog')
+    print ('-L             not to print level field of cilog')
+    print ('-S             not to print section field of cilog')
+    print ('-C             not to print code field of cilog')
 
 
 def print_version():
-    print(_version)
+    print (_version)
 
 
 def main():
     global _version
-    _version = "0.1.8"
+    _version = "0.1.9"
 
     global _skip_name
     _skip_name = False
@@ -593,8 +547,8 @@ def main():
         options, args = getopt.getopt(sys.argv[1:], "vfhrNIDTLSC", [
             "simple", "help", "retry", "version", "verbose"])
     except getopt.GetoptError as err:
-        print(str(err))
-        print("")
+        print (err)
+        print ("")
         usage()
         sys.exit(1)
 
