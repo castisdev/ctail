@@ -1,6 +1,6 @@
 # CTail
 
-최신 파일을 계속해서 tail -f 해주는 python(>=2.4) 스크립트
+최신 파일(linux)을 계속해서 tail -f 해주는 python(>=2.4) 스크립트
 
 ## 기능
 
@@ -44,23 +44,33 @@ $ cat cilog.log | ctail --simple
 ![](https://github.com/castisdev/ctail/blob/master/sample.png)
 
 
-#CPU 사용률
+## CPU 사용률
 
 - 11M 크기의 text file 2002 개가 있는 directory 에 대해서 수행할 경우
 
-|   버전    | 수행 대상               | CPU 사용률 |
-| --------  | ------------------------| ---------- |
-| 최초 버전 | directory               |  10 ~ 15%  |
-| 0.1.8     | directory               |  65 ~ 68%  |
-| 0.1.9     | directory               |  15 ~ 20%  |
-| -         | -                       |     -      |
-| 0.1.6     | file(-f option 사용시)  |   1 ~ 2%   |
-| 0.1.8     | file(-f option 사용시)  |  50 ~ 55%  |
-| 0.1.9     | file(-f option 사용시)  |   0 ~ 1%   |
+|   버전          | 수행 대상               | CPU 사용률 |
+| --------------- | ------------------------| ---------- |
+| 최초 버전       | directory               |  10 ~ 15%  |
+| 0.1.8           | directory               |  65 ~ 68%  |
+| 0.1.9 ~ 0.1.10  | directory               |  15 ~ 20%  |
+| -               | -                       |     -      |
+| 0.1.6           | file(-f option 사용시)  |   1 ~ 2%   |
+| 0.1.8           | file(-f option 사용시)  |  50 ~ 55%  |
+| 0.1.9 ~ 0.1.10  | file(-f option 사용시)  |   0 ~ 1%   |
 
 * binary file인지 검사하는 기능 때문에 CPU 사용률이 최초 버전보다 5 ~ 10% 정도 올라가는 것으로 보임
 
 ## Release Notes
+
+### 0.1.10
+
+[버그]
+* -f 옵션 사용하고 link 파일을 tail 할 때,  link 파일이 가리키는 파일이 다른 파일로 변할 때, tail 안되는 버그(0.1.9) 수정
+  * open, close 반복하지 않게 수정하면서 생긴 문제
+  * 파일의 inode 값이 변했는지 검사하는 코드 추가
+
+[변경]
+* -f 옵션 사용 시, tail 중인 파일의 이름이 바뀌거나 지워지는 경우, 종료됨(이전 버전에서는 종료 안됨)
 
 ### 0.1.9
 

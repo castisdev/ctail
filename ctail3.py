@@ -308,7 +308,7 @@ def get_path_of(filename):
 
 
 def exist_file(filename):
-    return os.path.isfile(filename) or os.path.islink(filename)
+    return os.path.exists(filename) and os.path.isfile(filename)
 
 
 def exist_directory(directory):
@@ -322,33 +322,39 @@ def cat():
 
 
 def get_tail_filename(filename, follow_file):
+    filename = os.path.abspath(filename)
+    tail_file = None
+    inode = None
     if follow_file:
         if not exist_file(filename):
             if _verbose:
                 print (colorize_ok('>>> Not found :{}'.format(filename)))
-            return None, False
+            return None, False, inode
         if is_binary(filename):
             if _verbose:
                 print (colorize_ok('>>> Not a text file :{}'.format(filename)))
-            return None, False
+            return None, False, inode
         tail_file = filename
+        inode = os.stat(tail_file).st_ino
     else:
         try:
             path = get_path_of(filename)
             if not exist_directory(path):
                 if _verbose:
                     print (colorize_ok('>>> Not found path :{}'.format(path)))
-                return None, False
+                return None, False, inode
             tail_file = newest_file_in(path)
             if tail_file == "":
                 if _verbose:
-                  print (colorize_ok('>>> Error : No text files in {}'.format(path)))
-                return None, False
+                    print (colorize_ok(
+                        '>>> Error : No text files in {}'.format(path)))
+                return None, False, inode
+            inode = os.stat(tail_file).st_ino
         except Exception as e:
             if _verbose:
                 print (colorize_ok('>>> Error :{}, {}'.foramt(filename, e)))
-            return None, False
-    return tail_file, True
+            return None, False, inode
+    return tail_file, True, inode
 
 
 def keep_tail(f):  # -> (offset, error)
@@ -378,12 +384,12 @@ def get_offset(filename):
     global _fileoffset_repository
     try:
         offset = _fileoffset_repository[filename]
-        return offset, True
+        return offset
     except Exception as e:
-        return 0, False
+        return 0
 
 
-def open_tail(filename, offset=0):  # -> (fd, error)
+def open_tail(filename, offset=0):
     try:
         f = open(filename)
     except Exception as e:
@@ -413,9 +419,21 @@ def open_tail(filename, offset=0):  # -> (fd, error)
     return f, False
 
 
+def is_inode_changed(file, inode):
+    try:
+        new_inode = os.stat(file).st_ino
+        if inode != new_inode:
+            return True, None
+        return False, None
+    except Exception as e:
+        if _verbose:
+            print (colorize_ok('>>> Error :{}'.format(e)))
+        return None, True
+
+
 def tail(filename, follow_file):
     global _last_target_filename
-    target, exist = get_tail_filename(filename, follow_file)
+    target, exist, inode = get_tail_filename(filename, follow_file)
     if not exist:
         return
 
@@ -427,28 +445,54 @@ def tail(filename, follow_file):
     while True:
         offset, error = keep_tail(f)
         if error:
-            put_offset(target, 0)
+            put_offset(str(inode), 0)
+            f.close()
             return
 
         if follow_file:
-            time.sleep(0.1)
-            continue
-        else:
-            new_target, exist = get_tail_filename(filename, False)
-            if not exist:
+            is_changed, error = is_inode_changed(target, inode)
+            if error:
+                put_offset(str(inode), 0)
+                f.close()
                 return
 
-            if target == new_target:
+            if not is_changed:
                 time.sleep(0.1)
                 continue
-            else:
-                put_offset(target, offset)
+
+            target, exist, new_inode = get_tail_filename(target, True)
+            if not exist:
+                put_offset(str(inode), offset)
+                f.close()
+                return
+
+            if inode != new_inode:
+                put_offset(str(inode), offset)
+                f.close()
+
+                inode = new_inode
+                offset = get_offset(str(inode))
+                f, error = open_tail(target, offset)
+                if error:
+                    put_offset(str(inode), 0)
+                    return
+        else:
+            new_target, exist, new_inode = get_tail_filename(filename, False)
+            if not exist:
+                put_offset(str(inode), offset)
+                f.close()
+                return
+
+            if target != new_target:
+                put_offset(str(inode), offset)
                 f.close()
 
                 target = new_target
-                offset, exist = get_offset(target)
+                inode = new_inode
+                offset = get_offset(str(inode))
                 f, error = open_tail(target, offset)
                 if error:
+                    put_offset(str(inode), 0)
                     return
                 _last_target_filename = target
 
@@ -457,7 +501,6 @@ def tail(filename, follow_file):
 
 def sig_handler(signal, frame):
     if _verbose:
-        offset, exist = get_offset(_last_target_filename)
         if _follow_file:
             print (colorize_ok("\n>>> Last Open :{}".format(_last_target_filename)))
         else:
@@ -477,7 +520,7 @@ def usage():
     print ('or tail the specific FILE with -f option')
     print ('Options:')
     print ('--version      print version')
-    print ('-f             follow FILE, not to tail the newest file in the directory of FILE')
+    print ('-f             follow FILE')
     print ('-r, --retry    keep trying to open a file if it is inaccessible. sleep for 1.0 sec between retry iterations')
     print ('-v, --verbose  print messages verbosely')
     print ('--simple       to print simple format')
@@ -496,7 +539,7 @@ def print_version():
 
 def main():
     global _version
-    _version = "0.1.9"
+    _version = "0.1.10"
 
     global _skip_name
     _skip_name = False
