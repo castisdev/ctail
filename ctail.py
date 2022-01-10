@@ -154,7 +154,7 @@ def format_cilog(log):
     if _skip_time:
         time = ""
 
-    if level in ['Error', 'Fail', 'Warning', 'Exception']:
+    if level in ['Error', 'Fail', 'Warning', 'Exception', 'error', 'warning', 'critical']:
         level = Colors['error'] + level + Colors['endc']
     else:
         level = Colors['level'] + level + Colors['endc']
@@ -228,7 +228,7 @@ def format_simplelog(log):
     if _skip_time:
         time = ""
 
-    if level in ['Error', 'Fail', 'Warning', 'Exception', 'ERROR', 'FAIL']:
+    if level in ['Error', 'Fail', 'Warning', 'Exception', 'ERROR', 'FAIL', 'error', 'warning', 'critical']:
         level = Colors['error'] + level + Colors['endc']
     else:
         level = Colors['level'] + level + Colors['endc']
@@ -537,7 +537,7 @@ def print_version():
 
 def main():
     global _version
-    _version = "0.1.10"
+    _version = "0.1.11"
 
     global _skip_name
     _skip_name = False
