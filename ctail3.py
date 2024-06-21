@@ -117,9 +117,9 @@ def format_eventlog(log):
     else:
         level = Colors['blue'] + level + Colors['endc']
     event = Colors['green'] + event + Colors['endc']
-    desc = re.sub("\[([^](]*)\]", "[" + Colors['keyword'] +
+    desc = re.sub(r"\[([^](]*)\]", "[" + Colors['keyword'] +
                   r"\1" + Colors['endc'] + "]", desc)
-    desc = re.sub("\(([^)]*)\)", "(" + Colors['value'] +
+    desc = re.sub(r"\(([^)]*)\)", "(" + Colors['value'] +
                   r"\1" + Colors['endc'] + ")", desc)
     if _skip_date and _skip_time:
         datetime = ""
@@ -161,7 +161,7 @@ def format_cilog(log):
     if _skip_level:
         level = ""
 
-    section = re.sub("\[([^]]*)\]", "[" + Colors['keyword'] +
+    section = re.sub(r"\[([^]]*)\]", "[" + Colors['keyword'] +
                      r"\1" + Colors['endc'] + "]", section)
     section = Colors['section'] + section + Colors['endc']
     if _skip_section:
@@ -171,9 +171,9 @@ def format_cilog(log):
     if _skip_code:
         code = ""
 
-    description = re.sub("\[([^]]*)\]", "[" + Colors['keyword'] +
+    description = re.sub(r"\[([^]]*)\]", "[" + Colors['keyword'] +
                          r"\1" + Colors['endc'] + Colors['description'] + "]", description)
-    description = re.sub("\(([^)]*)\)", "(" + Colors['value'] +
+    description = re.sub(r"\(([^)]*)\)", "(" + Colors['value'] +
                          r"\1" + Colors['endc'] + Colors['description'] + ")", description)
     description = Colors['description'] + description + Colors['endc']
 
@@ -235,15 +235,15 @@ def format_simplelog(log):
     if _skip_level:
         level = ""
 
-    section = re.sub("\[([^]]*)\]", "[" + Colors['keyword'] +
+    section = re.sub(r"\[([^]]*)\]", "[" + Colors['keyword'] +
                      r"\1" + Colors['endc'] + "]", section)
     section = Colors['section'] + section + Colors['endc']
     if _skip_section:
         section = ""
 
-    description = re.sub("\[([^]]*)\]", "[" + Colors['keyword'] +
+    description = re.sub(r"\[([^]]*)\]", "[" + Colors['keyword'] +
                          r"\1" + Colors['endc'] + Colors['description'] + "]", description)
-    description = re.sub("\(([^)]*)\)", "(" + Colors['value'] +
+    description = re.sub(r"\(([^)]*)\)", "(" + Colors['value'] +
                          r"\1" + Colors['endc'] + Colors['description'] + ")", description)
     description = Colors['description'] + description + Colors['endc']
 
@@ -539,7 +539,7 @@ def print_version():
 
 def main():
     global _version
-    _version = "0.1.11"
+    _version = "0.1.12"
 
     global _skip_name
     _skip_name = False
